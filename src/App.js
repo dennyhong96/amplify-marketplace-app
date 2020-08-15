@@ -9,7 +9,6 @@ import HomePage from "./pages/HomePage";
 import ProfilePage from "./pages/ProfilePage";
 import MarketPage from "./pages/MarketPage";
 import Navbar from "./components/Navbar";
-
 import "./App.css";
 
 const App = () => {
@@ -37,7 +36,13 @@ const App = () => {
           <Switch>
             <Route exact path="/" component={HomePage} />
             <Route exact path="/profile" component={ProfilePage} />
-            <Route exact path="/markets/:marketId" component={MarketPage} />
+            <Route
+              exact
+              path="/markets/:marketId"
+              component={(routeProps) => (
+                <MarketPage {...routeProps} user={user} />
+              )}
+            />
           </Switch>
         </div>
       </BrowserRouter>
