@@ -21,8 +21,8 @@ const AWS = require("aws-sdk");
 const config = {
   region: "us-west-2",
   adminEmail: "hong961127@gmail.com",
-  accessKeyId: "AKIAJA2K5FEEGG2GMCMQ",
-  secretAccessKey: "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",
+  accessKeyId: process.env.ACCESS,
+  secretAccessKey: process.env.SECRET_ACCESS,
 };
 
 const ses = new AWS.SES(config);
@@ -81,7 +81,7 @@ const emailHandler = async (req, res, next) => {
       Source: config.adminEmail,
       ReturnPath: config.adminEmail,
       Destination: {
-        ToAddresses: [config.adminEmail],
+        ToAddresses: [config.adminEmail, customerEmail, ownerEmail],
       },
       Message: {
         Subject: {
