@@ -27,6 +27,7 @@ const App = () => {
           } = await API.graphql(
             graphqlOperation(getUser, { id: user.attributes.sub })
           );
+          console.log(existingUser);
           if (!existingUser) {
             const input = {
               id: user.attributes.sub,

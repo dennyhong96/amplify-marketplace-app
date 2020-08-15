@@ -17,7 +17,7 @@ const getMarket = /* GraphQL */ `
       name
       tags
       owner
-      products {
+      products(sortDirection: DESC, limit: 999) {
         items {
           id
           description

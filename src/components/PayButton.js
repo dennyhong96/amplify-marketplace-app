@@ -3,6 +3,7 @@ import { API, graphqlOperation } from "aws-amplify";
 import StripeCheckout from "react-stripe-checkout";
 
 import { getUser } from "../graphql/queries";
+import { createorder } from "../graphql/mutations";
 
 const stripeConfig = {
   currency: "USD",
@@ -24,7 +25,7 @@ const PayButton = ({ product, user }) => {
 
   const handleToken = async (token) => {
     try {
-      const res = await API.post("orderlambda", "/charge", {
+      const result = await API.post("orderlambda", "/charge", {
         body: {
           token,
           charge: {
@@ -39,7 +40,26 @@ const PayButton = ({ product, user }) => {
           },
         },
       });
-      console.log({ res });
+
+      if (result.charge.status === "succeeded") {
+        const input = {
+          orderProductId: product.id,
+          orderUserId: user.attributes.sub,
+        };
+
+        if (product.shipped) {
+          input.shippingAddress = {
+            address_line1: result.chargesource.address_line1,
+            city: result.chargesource.city,
+            country: result.chargesource.country,
+            address_state: result.chargesource.address_state,
+            address_zip: result.chargesource.address_zip,
+          };
+        }
+
+        const res = await API.graphql(graphqlOperation(createorder, { input }));
+        console.log("order", res.data);
+      }
     } catch (error) {
       console.error(error);
     }

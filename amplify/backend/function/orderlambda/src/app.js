@@ -81,7 +81,8 @@ const emailHandler = async (req, res, next) => {
       Source: config.adminEmail,
       ReturnPath: config.adminEmail,
       Destination: {
-        ToAddresses: [config.adminEmail, customerEmail, ownerEmail],
+        // ToAddresses: [config.adminEmail, customerEmail, ownerEmail], // Have to move out of SES sendbox
+        ToAddresses: [config.adminEmail],
       },
       Message: {
         Subject: {
