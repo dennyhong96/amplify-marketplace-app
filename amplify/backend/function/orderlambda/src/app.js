@@ -13,8 +13,19 @@ Amplify Params - DO NOT EDIT */
 var express = require("express");
 var bodyParser = require("body-parser");
 var awsServerlessExpressMiddleware = require("aws-serverless-express/middleware");
+
 require("dotenv").config();
 const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
+const AWS = require("aws-sdk");
+
+const config = {
+  region: "us-west-2",
+  adminEmail: "hong961127@gmail.com",
+  accessKeyId: "AKIAJA2K5FEEGG2GMCMQ",
+  secretAccessKey: "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",
+};
+
+const ses = new AWS.SES(config);
 
 // declare a new express app
 var app = express();
@@ -31,7 +42,7 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.post("/charge", async (req, res, next) => {
+const chargeHandler = async (req, res, next) => {
   const {
     token,
     charge: { currency, amount, description },
@@ -44,12 +55,73 @@ app.post("/charge", async (req, res, next) => {
       currency,
       description,
     });
-    res.status(200).json(charge);
+
+    if (charge.status === "succeeded") {
+      req.charge = charge;
+      req.description = description;
+      req.email = req.body.email;
+      next();
+    }
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error });
   }
-});
+};
+
+const centesToDollar = (cents) => (cents / 100).toFixed(2);
+
+const emailHandler = async (req, res, next) => {
+  const {
+    charge,
+    descripiton,
+    email: { customerEmail, ownerEmail, shipped },
+  } = req;
+  ses.sendEmail(
+    {
+      Source: config.adminEmail,
+      ReturnPath: config.adminEmail,
+      Destination: {
+        ToAddresses: [config.adminEmail],
+      },
+      Message: {
+        Subject: {
+          Data: "Order Details - AmplifyMarket",
+        },
+        Body: {
+          Html: {
+            Charset: "UTF-8",
+            Data: `
+            <h3>Order Processed!</h3>
+            <p>${descripiton} - $${centesToDollar(charge.amount)}</p>
+            <p>Customer Email: ${customerEmail}</p>
+            <p>Seller Email: ${ownerEmail}</p>
+            ${
+              shipped
+                ? `
+            <p>${charge.source.address_line1}</p>
+            <p>${charge.source.address_city}</p>
+            <p>${charge.source.address_zip}</p>
+            `
+                : `<p>Emailed Product</p>`
+            }`,
+          },
+        },
+      },
+    },
+    (err, data) => {
+      if (err) {
+        return res.status(500).json({ error: err });
+      }
+      res.json({
+        message: "Order processed successful",
+        charge,
+        data,
+      });
+    }
+  );
+};
+
+app.post("/charge", chargeHandler, emailHandler);
 
 app.listen(3000, function () {
   console.log("App started");

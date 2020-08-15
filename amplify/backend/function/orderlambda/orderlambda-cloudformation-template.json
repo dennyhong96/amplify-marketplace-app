@@ -69,7 +69,7 @@
 				"Timeout": "25",
 				"Code": {
 					"S3Bucket": "amplify-amplifymarket-dev-165902-deployment",
-					"S3Key": "amplify-builds/orderlambda-574863546e5a574e654b-build.zip"
+					"S3Key": "amplify-builds/orderlambda-62763172484a634d384e-build.zip"
 				}
 			}
 		},

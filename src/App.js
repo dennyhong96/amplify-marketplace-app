@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Auth } from "aws-amplify";
+import { Auth, API, graphqlOperation } from "aws-amplify";
 import { AuthState, onAuthUIStateChange } from "@aws-amplify/ui-components";
 import { AmplifyAuthenticator, AmplifySignOut } from "@aws-amplify/ui-react";
 import { BrowserRouter, Route, Switch } from "react-router-dom";
 
+import { getUser } from "./graphql/queries";
+import { registerUser } from "./graphql/mutations";
 import UserContext from "./UserContext";
 import HomePage from "./pages/HomePage";
 import ProfilePage from "./pages/ProfilePage";
@@ -16,7 +18,32 @@ const App = () => {
   const [user, setUser] = useState();
 
   useEffect(() => {
-    console.log(authState, user);
+    if (authState === "signedin" && user) {
+      console.log(user);
+      (async () => {
+        try {
+          const {
+            data: { getUser: existingUser },
+          } = await API.graphql(
+            graphqlOperation(getUser, { id: user.attributes.sub })
+          );
+          if (!existingUser) {
+            const input = {
+              id: user.attributes.sub,
+              username: user.username,
+              email: user.attributes.email,
+              registered: true,
+            };
+            const res = await API.graphql(
+              graphqlOperation(registerUser, { input })
+            );
+            console.log(res.data);
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      })();
+    }
   }, [authState, user]);
 
   useEffect(() => {
